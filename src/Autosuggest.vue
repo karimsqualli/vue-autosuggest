@@ -8,6 +8,7 @@
                :class="[isOpen ? 'autosuggest__input-open' : '', inputProps['class']]"
                @keydown="handleKeyStroke"
                @click="onClick"
+               @blur="onBlur"
                v-bind="inputProps"
                aria-autosuggest="list"
                aria-owns="autosuggest__results"
@@ -143,7 +144,7 @@ export default {
   computed: {
     isOpen() {
       return this.getSize() > 0 && this.shouldRenderSuggestions() && !this.loading;
-    }
+    },
   },
   methods: {
     _onSelected() {
@@ -235,10 +236,18 @@ export default {
             break;
           }
           this.$nextTick(() => {
-            if (this.getSize() > 0 && this.currentIndex >= 0) {
+            
+ 
+            if (this.getSize() > 0 && this.currentIndex != null && this.currentIndex >= 0) {
               this.setChangeItem(this.getItemByIndex(this.currentIndex), true);
               this.didSelectFromOptions = true;
             }
+            else if(this.getSize() > 0) {
+              this.setCurrentIndex(0, this.getSize(), 0);
+              this.setChangeItem(this.getItemByIndex(0), true);
+              this.didSelectFromOptions = true;
+            }
+
             this.loading = true;
             this.$nextTick(() => {
               this._onSelected(this.didSelectFromOptions);
@@ -250,7 +259,7 @@ export default {
             /* For 'search' input type, make sure the browser doesn't clear the input when Escape is pressed. */
             this.loading = true;
             this.currentIndex = null;
-            this.searchInput = this.searchInputOriginal;
+            this.searchInput = '';
             e.preventDefault();
           }
           break;
@@ -356,6 +365,7 @@ export default {
         addClass(element, hoverClass);
       }
     },
+
     onClick() {
       this.loading = false;
       this.internal_inputProps.onClick(this.currentItem);
@@ -363,6 +373,13 @@ export default {
       this.$nextTick(() => {
         this.ensureItemVisible(this.currentItem, this.currentIndex);
       });
+    },
+
+    onBlur() {
+      if(this.currentIndex === null) {
+        this.searchInput = '';
+        this.loading = true;
+      }
     }
   },
   mounted() {
